@@ -2,7 +2,7 @@ import {Request, Response, Router} from "express";
 import dotenv from "dotenv";
 import mysql from "mysql2/promise";
 import * as process from "process";
-import {rateLimit} from "express-rate-limit";
+// import {rateLimit} from "express-rate-limit";
 import {Sentry} from "../../utils/utils";
 import RequireX7SKey from "../../middlewares/RequireX7SKey";
 import {API_KEY_QUERY} from "../../utils/constants";
@@ -15,7 +15,7 @@ dotenv.config();
 const router = Router();
 
 router.use('/',RequireX7SKey);
-router.use('/', rateLimit({ windowMs: 3000,  max: 500,  message: "Rate limit exceeded!",  legacyHeaders: true}) );
+// router.use('/', rateLimit({ windowMs: 3000,  max: 500,  message: "Rate limit exceeded!",  legacyHeaders: true}) );
 
 router.put('/chat-id', async (req: Request, res: Response) => {
 
@@ -63,7 +63,7 @@ router.get('/open-positions', async (req: Request, res: Response) => {
 
         const connection = await mysql.createConnection(process.env.DATABASE_URL);
 
-        const [result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, 1, fromId ] );
+        const [result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, fromId ] );
 
         await connection.end();
 
