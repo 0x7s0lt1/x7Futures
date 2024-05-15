@@ -5,7 +5,6 @@ export const API_KEY_QUERY = "SELECT `api`.`id` AS `id`, `api`.`exchange` AS `ex
                                                     "WHERE " +
                                                     "`api`.`status` = 'ACTIVE' AND " +
                                                     "`api`.`exchange` = ? AND " +
-                                                    "`api`.`testnet` = ? AND " +
                                                     "`api`.`telegram_user_id` = ? "
                                                     ;
 export const SIGNAL_BOT_BY_SYMBOL_QUERY = "SELECT `ss`.`quote_amount` AS `quote_amount`, `ss`.`leverage` AS `leverage`, `ss`.`initial_capital` AS `initial_capital`," +

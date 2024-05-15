@@ -30,7 +30,7 @@ router.put('/chat-id', async (req: Request, res: Response) => {
 
         const connection = await mysql.createConnection(process.env.DATABASE_URL);
 
-        const [result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, 1, fromId ] );
+        const [result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, fromId ] );
 
         if(Array.isArray(result) && result.length === 0){
 
