@@ -20,3 +20,8 @@ export const SIGNAL_BOT_BY_SYMBOL_QUERY = "SELECT `ss`.`quote_amount` AS `quote_
                                                     "`ss`.`symbol` = ? AND " +
                                                     "`ss`.`status` = 'ACTIVE'"
                                                     ;
+
+export const API_SYMBOLS_QUERY = "SELECT  `ss`. `id` AS `id`, `ss`. `api_id` AS `api_id`, `ss`.`symbol` AS `symbol`,`ss`.`status` AS `status`, `ss`.`leverage` AS `leverage`, `ss`.`initial_capital` AS `initial_capital`, `ss`.`quote_amount` AS `quote_amount`" +
+                                        " FROM `symbol_settings` AS `ss` " +
+                                        " WHERE `ss`.`api_id` = ? "
+                                        ;

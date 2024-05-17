@@ -150,6 +150,24 @@ export default class USDMFutureService {
     }
 
     /**
+     * Retrieves the leverage bracket for a given symbol from the Binance API.
+     *
+     * @param {string} symbol - The symbol for which to retrieve the leverage bracket.
+     * @return {Promise<any>} A promise that resolves with the leverage bracket information or rejects with an error.
+     */
+    public async leverageBracket ( symbol: string ): Promise<any> {
+
+        return new Promise((resolve, reject) => {
+
+            this.query("GET", "/fapi/v1/leverageBracket", {symbol}, true)
+            .then(res => resolve(res))
+            .catch(err => reject(err));
+
+        });
+
+    }
+
+    /**
      * Sets the leverage for a given symbol.
      *
      * @param {string} symbol - The symbol for which to set the leverage.

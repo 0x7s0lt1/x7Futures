@@ -13,7 +13,7 @@ import {Sentry} from "./utils/utils";
 // import initCronJobs from "./cronjobs";
 // import USDMFuturesService from "./services/binance/USDMFutureService";
 // import mysql from "mysql2/promise";
-// import {SIGNAL_BOT_BY_SYMBOL_QUERY} from "./utils/constants";
+// import {API_SYMBOLS_QUERY, SIGNAL_BOT_BY_SYMBOL_QUERY} from "./utils/constants";
 
 dotenv.config();
 
@@ -30,9 +30,11 @@ dotenv.config();
     //
     //     let connection = await mysql.createConnection(process.env.DATABASE_URL);
     //
-    //     const [result] = await connection.query(SIGNAL_BOT_BY_SYMBOL_QUERY,[ "BINANCE", 1, "FETUSDT" ] );
+    //     const [result] = await connection.query(API_SYMBOLS_QUERY,[ 1 ] );
     //
     //     console.log(result);
+    //
+    //     //console.log(lev[0].brackets[0].initialLeverage);
     //
     // }catch (e) {
     //     console.log(e);

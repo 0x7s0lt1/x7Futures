@@ -5,7 +5,7 @@ import * as process from "process";
 // import {rateLimit} from "express-rate-limit";
 import {Sentry} from "../../utils/utils";
 import RequireX7SKey from "../../middlewares/RequireX7SKey";
-import {API_KEY_QUERY} from "../../utils/constants";
+import {API_KEY_QUERY, API_SYMBOLS_QUERY} from "../../utils/constants";
 import USDMFutureService from "../../services/binance/USDMFutureService";
 import ApiKeyType from "../../types/ApiKeyType";
 import {Exchange} from "../../types/Exchange";
@@ -48,6 +48,62 @@ router.put('/chat-id', async (req: Request, res: Response) => {
         Sentry.captureException(e);
         console.log(e);
         res.status(500).send(e);
+    }
+
+});
+
+router.put('/symbol-leverage', async (req: Request, res: Response) => {
+
+    const connection = await mysql.createConnection(process.env.DATABASE_URL);
+
+    try{
+
+        const fromId = req.query.from_id;
+
+        if(fromId !== undefined){
+
+            const [api_result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, fromId ] );
+
+            if(Array.isArray(api_result) && api_result.length === 0){
+
+                await connection.end();
+                return res.status(400).send(`No API key found for this from_id: ${fromId}`);
+            }
+
+            const [symbols] = await connection.query(API_SYMBOLS_QUERY, [ api_result[0].id ] );
+
+            await connection.end();
+
+            return res.status(200).send(symbols);
+
+        }
+
+        const symbol = req.body.symbol;
+        const leverage = req.body.leverage;
+        const from_id = req.body.from_id;
+
+        if(!symbol || !leverage || !from_id){
+            await connection.end();
+            return res.status(400).send("Missing symbol, leverage or from_id");
+        }
+
+        await connection.query("UPDATE symbols SET leverage = ? WHERE symbol = ? AND from_id = ?", [ leverage, symbol, from_id ]);
+
+
+        await connection.end();
+        res.status(200).send("OK");
+
+
+    }catch (e) {
+
+        if(connection){
+            await connection.end();
+        }
+
+        Sentry.captureException(e);
+        console.log(e);
+        res.status(500).send(e);
+
     }
 
 });
