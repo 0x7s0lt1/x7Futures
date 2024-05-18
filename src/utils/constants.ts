@@ -25,3 +25,10 @@ export const API_SYMBOLS_QUERY = "SELECT  `ss`. `id` AS `id`, `ss`. `api_id` AS 
                                         " FROM `symbol_settings` AS `ss` " +
                                         " WHERE `ss`.`api_id` = ? "
                                         ;
+
+export const API_SYMBOL_QUERY = "SELECT  `ss`. `id` AS `id`, `ss`. `api_id` AS `api_id`, `ss`.`symbol` AS `symbol`,`ss`.`status` AS `status`, `ss`.`leverage` AS `leverage`, `ss`.`initial_capital` AS `initial_capital`, `ss`.`quote_amount` AS `quote_amount`" +
+                                        " FROM `symbol_settings` AS `ss` " +
+                                        " WHERE " +
+                                            "`ss`.`symbol` = ? AND " +
+                                            "`ss`.`api_id` = ? "
+                                        ;

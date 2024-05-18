@@ -5,7 +5,7 @@ import * as process from "process";
 // import {rateLimit} from "express-rate-limit";
 import {Sentry} from "../../utils/utils";
 import RequireX7SKey from "../../middlewares/RequireX7SKey";
-import {API_KEY_QUERY, API_SYMBOLS_QUERY} from "../../utils/constants";
+import {API_KEY_QUERY, API_SYMBOL_QUERY, API_SYMBOLS_QUERY} from "../../utils/constants";
 import USDMFutureService from "../../services/binance/USDMFutureService";
 import ApiKeyType from "../../types/ApiKeyType";
 import {Exchange} from "../../types/Exchange";
@@ -52,7 +52,7 @@ router.put('/chat-id', async (req: Request, res: Response) => {
 
 });
 
-router.put('/symbol-leverage', async (req: Request, res: Response) => {
+router.get('/symbols', async (req: Request, res: Response) => {
 
     const connection = await mysql.createConnection(process.env.DATABASE_URL);
 
@@ -60,34 +60,101 @@ router.put('/symbol-leverage', async (req: Request, res: Response) => {
 
         const fromId = req.query.from_id;
 
-        if(fromId !== undefined){
+        if(!fromId){
+            return res.status(400).send("Missing from_id");
+        }
 
-            const [api_result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, fromId ] );
+        const [api_result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, fromId ] );
 
-            if(Array.isArray(api_result) && api_result.length === 0){
-
-                await connection.end();
-                return res.status(400).send(`No API key found for this from_id: ${fromId}`);
-            }
-
-            const [symbols] = await connection.query(API_SYMBOLS_QUERY, [ api_result[0].id ] );
+        if(Array.isArray(api_result) && api_result.length === 0){
 
             await connection.end();
+            return res.status(400).send(`No API key found for this from_id: ${fromId}`);
+        }
 
-            return res.status(200).send(symbols);
+        const [symbols] = await connection.query(API_SYMBOLS_QUERY, [ api_result[0].id ] );
 
+        await connection.end();
+
+        return res.status(200).send(symbols);
+
+    }catch (e) {
+        Sentry.captureException(e);
+        console.log(e);
+        res.status(500).send(e);
+    }
+
+})
+
+router.get('/symbol', async (req: Request, res: Response) => {
+
+    const connection = await mysql.createConnection(process.env.DATABASE_URL);
+
+    try{
+
+        const fromId = req.query.from_id;
+        const symbol = req.query.symbol;
+
+        if(!fromId || !symbol){
+            return res.status(400).send("Missing from_id or symbol");
+        }
+
+        const [api_result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, fromId ] );
+
+        if(Array.isArray(api_result) && api_result.length === 0){
+
+            await connection.end();
+            return res.status(400).send(`No API key found for this from_id: ${fromId}`);
+        }
+
+        const [symbol_result] = await connection.query(API_SYMBOL_QUERY, [ symbol, api_result[0].id ] );
+
+        await connection.end();
+
+        if(Array.isArray(symbol_result) && symbol_result.length === 0){
+
+            return res.status(400).send(`No symbol found for this symbol: ${symbol}`);
+        }
+
+        return res.status(200).send(symbol_result);
+
+    }catch (e) {
+        Sentry.captureException(e);
+        console.log(e);
+        res.status(500).send(e);
+    }
+
+})
+
+router.put('/leverage', async (req: Request, res: Response) => {
+
+    const connection = await mysql.createConnection(process.env.DATABASE_URL);
+
+    try{
+
+        const from_id = req.body.from_id;
+
+        if (!from_id){
+            return res.status(400).send("Missing from_id");
+        }
+
+        const [api_result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, from_id ] );
+
+        if(Array.isArray(api_result) && api_result.length === 0){
+
+            await connection.end();
+            return res.status(400).send(`No API key found for this from_id: ${from_id}`);
         }
 
         const symbol = req.body.symbol;
         const leverage = req.body.leverage;
-        const from_id = req.body.from_id;
 
-        if(!symbol || !leverage || !from_id){
+        if(!symbol || !leverage){
             await connection.end();
-            return res.status(400).send("Missing symbol, leverage or from_id");
+            return res.status(400).send("Missing symbol or leverage");
         }
 
-        await connection.query("UPDATE symbols SET leverage = ? WHERE symbol = ? AND from_id = ?", [ leverage, symbol, from_id ]);
+        await connection.query("UPDATE symbols SET leverage = ? WHERE symbol = ? AND api_id = ?", [ leverage, symbol, api_result[0].id ] );
 
 
         await connection.end();
