@@ -96,7 +96,7 @@ router.get('/symbol', async (req: Request, res: Response) => {
         const symbol = req.query.symbol;
 
         if(!fromId || !symbol){
-            return res.status(400).send("Missing from_id or symbol");
+            return res.status(403).send("Missing from_id or symbol");
         }
 
         const [api_result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, fromId ] );
@@ -104,7 +104,7 @@ router.get('/symbol', async (req: Request, res: Response) => {
         if(Array.isArray(api_result) && api_result.length === 0){
 
             await connection.end();
-            return res.status(400).send(`No API key found for this from_id: ${fromId}`);
+            return res.status(403).send(`No API key found for this from_id: ${fromId}`);
         }
 
         const [symbol_result] = await connection.query(API_SYMBOL_QUERY, [ symbol, api_result[0].id ] );
@@ -151,9 +151,10 @@ router.put('/leverage', async (req: Request, res: Response) => {
 
         if(!symbol || !leverage){
             await connection.end();
-            return res.status(400).send("Missing symbol or leverage");
+            return res.status(403).send("Missing symbol or leverage");
         }
 
+        //TODO: handle missing symbol
         await connection.query("UPDATE symbols SET leverage = ? WHERE symbol = ? AND api_id = ?", [ leverage, symbol, api_result[0].id ] );
 
 
