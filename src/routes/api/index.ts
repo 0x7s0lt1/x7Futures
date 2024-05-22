@@ -52,6 +52,46 @@ router.put('/chat-id', async (req: Request, res: Response) => {
 
 });
 
+router.get('/total-capital', async (req: Request, res: Response) => {
+
+    const connection = await mysql.createConnection(process.env.DATABASE_URL);
+
+    try{
+
+        const fromId = req.query.from_id;
+
+        if(!fromId){
+            return res.status(400).send("Missing from_id");
+        }
+
+        const [api_result] = await connection.query(API_KEY_QUERY, [ Exchange.BINANCE, fromId ] );
+
+        if(Array.isArray(api_result) && api_result.length === 0){
+
+            await connection.end();
+            return res.status(400).send(`No API key found for this from_id: ${fromId}`);
+        }
+
+        const [symbols] = await connection.query(API_SYMBOLS_QUERY, [ api_result[0].id ] );
+
+        await connection.end();
+
+        if(!Array.isArray(symbols)){
+            return res.status(400).send({ total_capital: 0 , currency: "USDT"});
+        }
+
+        const total_capital = symbols.reduce((acc: number, symbol: any) => acc + Number(symbol.initial_capital), 0);
+
+        return res.status(200).send({ total_capital, currency: "USDT"});
+
+    }catch (e) {
+        Sentry.captureException(e);
+        console.log(e);
+        res.status(500).send(e);
+    }
+
+})
+
 router.get('/symbols', async (req: Request, res: Response) => {
 
     const connection = await mysql.createConnection(process.env.DATABASE_URL);
