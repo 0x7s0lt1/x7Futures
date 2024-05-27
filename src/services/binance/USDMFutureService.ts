@@ -1,13 +1,13 @@
 import dotenv from "dotenv";
 import * as crypto from "crypto";
-import * as process from "process";
-import mysql from "mysql2/promise";
 import Order from "../../types/Binance/USDMFutures/Order";
 import {OrderSide} from "../../types/Binance/USDMFutures/OrderSide";
 import {SymbolFilter} from "../../types/Binance/USDMFutures/SymbolFilter";
 import {KlineInterval} from "Binance/KlineInterval";
 import {Sentry} from "../../utils/utils";
 import ApiKeyType from "../../types/ApiKeyType";
+import {PositionMode} from "../../types/Binance/USDMFutures/PositionMode";
+import {AssetsMode} from "../../types/Binance/USDMFutures/AssetsMode";
 
 dotenv.config();
 
@@ -545,6 +545,92 @@ export default class USDMFutureService {
             .then(res => resolve(res))
             .catch(err => reject(err));
 
+        });
+
+    }
+
+    /**
+     * Sets the position mode for the Binance Futures API.
+     *
+     * @param {PositionMode} mode - The position mode to set.
+     * @return {Promise<any>} A Promise that resolves with the response from the API if the request is successful, or rejects with an error if the request fails.
+     */
+    public async setPositionMode( mode: PositionMode ): Promise<any> {
+
+        const payload = {
+            dualSidePosition: mode == PositionMode.HEDGE
+        }
+
+        return new Promise((resolve, reject) => {
+            this.query("POST", "/fapi/v1/positionSide/dual", payload, true)
+                .then(res => resolve(res))
+                .catch(err => reject(err));
+        });
+
+    }
+
+    /**
+     * Retrieves the multi-assets mode from the Binance Futures API.
+     *
+     * @return {Promise<any>} A promise that resolves with the multi-assets mode if the request is successful, or rejects with an error if the request fails.
+     */
+    public async getMultiAssetsMode(): Promise<any> {
+
+        return new Promise((resolve, reject) => {
+            this.query("GET", "/fapi/v1/multiAssetsMargin", {}, true)
+                .then(res => resolve(res))
+                .catch(err => reject(err));
+        });
+
+    }
+
+    /**
+     * Sets the multi-assets mode for the Binance Futures API.
+     *
+     * @param {AssetsMode} mode - The multi-assets mode to set.
+     * @return {Promise<any>} A Promise that resolves with the response from the API if the request is successful, or rejects with an error if the request fails.
+     */
+    public async setMultiAssetsMode( mode: AssetsMode ): Promise<any> {
+
+        const payload = {
+            multiAssetsMargin: mode === AssetsMode.MULTIPLE
+        }
+
+        return new Promise((resolve, reject) => {
+            this.query("POST", "/fapi/v1/multiAssetsMargin", payload, true)
+                .then(res => resolve(res))
+                .catch(err => reject(err));
+        });
+
+    }
+
+    /**
+     * Retrieves the fee burn information from the Binance API.
+     *
+     * @return {Promise<any>} A promise that resolves with the fee burn information or rejects with an error.
+     */
+    public async getFeeBurn(): Promise<any> {
+
+        return new Promise((resolve, reject) => {
+            this.query("GET", "/fapi/v1/feeBurn", {}, true)
+                .then(res => resolve(res))
+                .catch(err => reject(err));
+        });
+
+    }
+
+    /**
+     * Sets the fee burn status for the Binance Futures API.
+     *
+     * @param {boolean} feeBurn - The fee burn status to set.
+     * @return {Promise<any>} A Promise that resolves with the response from the API if the request is successful, or rejects with an error if the request fails.
+     */
+    public async setFeeBurn( feeBurn: boolean ): Promise<any> {
+
+        return new Promise((resolve, reject) => {
+            this.query("POST", "/fapi/v1/feeBurn", { feeBurn }, true)
+                .then(res => resolve(res))
+                .catch(err => reject(err));
         });
 
     }

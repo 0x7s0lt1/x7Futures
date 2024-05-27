@@ -9,6 +9,7 @@ import {API_KEY_QUERY, API_SYMBOL_QUERY, API_SYMBOLS_QUERY} from "../../utils/co
 import USDMFutureService from "../../services/binance/USDMFutureService";
 import ApiKeyType from "../../types/ApiKeyType";
 import {Exchange} from "../../types/Exchange";
+import {SymbolStatus} from "../../types/SymbolStatus";
 
 dotenv.config();
 
