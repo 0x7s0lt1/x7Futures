@@ -1,4 +1,4 @@
-export const TEST_MODE = true;
+export const TEST_MODE = false;
 
 export const API_KEY_QUERY = "SELECT `api`.`id` AS `id`, `api`.`exchange` AS `exchange`, `api`.`testnet` AS `testnet`, `api`.`public_key` AS `public_key`, `api`.`private_key` AS `private_key`, `api`.`extra` AS `extra`, `api`.`telegram_chat_id` AS `telegram_chat_id`, `api`.`telegram_user_id` AS `telegram_user_id` " +
                                                     "FROM `apis` AS `api` " +

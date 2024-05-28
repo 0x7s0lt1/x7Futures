@@ -36,7 +36,6 @@ export default class USDMFutureBotService extends USDMFutureService {
         return new Promise<void>(async (resolve, reject) => {
 
             try{
-                console.log(this.bot);
 
                 this.connection = await mysql.createConnection(process.env.DATABASE_URL);
 
