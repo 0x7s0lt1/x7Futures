@@ -23,11 +23,11 @@ dotenv.config();
 
 (async ()=>{
 
-    //await initCronJobs();
+    await new SignalProcessingConsumer().consume();
+    await new SignalBotConsumer().consume();
+    await new SignalBroadcastConsumer().consume();
 
-    // await new SignalProcessingConsumer().consume();
-    // await new SignalBotConsumer().consume();
-    // await new SignalBroadcastConsumer().consume();
+    //await initCronJobs();
     //
     // try{
     //
