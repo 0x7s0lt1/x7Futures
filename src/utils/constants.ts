@@ -7,7 +7,7 @@ export const API_KEY_QUERY = "SELECT `api`.`id` AS `id`, `api`.`exchange` AS `ex
                                                     "`api`.`exchange` = ? AND " +
                                                     "`api`.`telegram_user_id` = ? "
                                                     ;
-export const ALL_API_KEYS_QUERY = "SELECT `api`.`id` AS `id`,`api`.`name` AS `name`, `api`.`exchange` AS `exchange`, `api`.`testnet` AS `testnet`, CONCAT(SUBSTRING(`api`.`public_key`,1,10), '...', SUBSTRING(`api`.`public_key`,-7,7)) AS `public_key`, CONCAT(SUBSTRING(`api`.`private_key`,1,10), '...', SUBSTRING(`api`.`private_key`,-7,7)) AS `private_key`, `api`.`extra` AS `extra`, `api`.`extra` AS `status`, `api`.`telegram_chat_id` AS `telegram_chat_id`, `api`.`telegram_user_id` AS `telegram_user_id` " +
+export const ALL_API_KEYS_QUERY = "SELECT `api`.`id` AS `id`,`api`.`name` AS `name`, `api`.`exchange` AS `exchange`, `api`.`testnet` AS `testnet`, CONCAT(SUBSTRING(`api`.`public_key`,1,10), '...', SUBSTRING(`api`.`public_key`,-7,7)) AS `public_key`, CONCAT(SUBSTRING(`api`.`private_key`,1,10), '...', SUBSTRING(`api`.`private_key`,-7,7)) AS `private_key`, `api`.`extra` AS `extra`, `api`.`status` AS `status`, `api`.`telegram_chat_id` AS `telegram_chat_id`, `api`.`telegram_user_id` AS `telegram_user_id` " +
                                                 "FROM `apis` AS `api` " +
                                                 "WHERE " +
                                                 "`api`.`telegram_user_id` = ? "
