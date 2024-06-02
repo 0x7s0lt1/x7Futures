@@ -7,6 +7,11 @@ export const API_KEY_QUERY = "SELECT `api`.`id` AS `id`, `api`.`exchange` AS `ex
                                                     "`api`.`exchange` = ? AND " +
                                                     "`api`.`telegram_user_id` = ? "
                                                     ;
+export const ALL_API_KEYS_QUERY = "SELECT `api`.`id` AS `id`, `api`.`exchange` AS `exchange`, `api`.`testnet` AS `testnet`, CONCAT(SUBSTRING(`api`.`public_key`,1,10), '...', SUBSTRING(`api`.`public_key`,-10,10)) AS `public_key`, CONCAT(SUBSTRING(`api`.`private_key`,1,10), '...', SUBSTRING(`api`.`private_key`,-10,10)) AS `private_key`, `api`.`extra` AS `extra`, `api`.`telegram_chat_id` AS `telegram_chat_id`, `api`.`telegram_user_id` AS `telegram_user_id` " +
+                                                "FROM `apis` AS `api` " +
+                                                "WHERE " +
+                                                "`api`.`telegram_user_id` = ? "
+                                                    ;
 export const SIGNAL_BOT_BY_SYMBOL_QUERY = "SELECT `ss`.`quote_amount` AS `quote_amount`, `ss`.`leverage` AS `leverage`, `ss`.`initial_capital` AS `initial_capital`," +
                                                 "`st`.`buy_state` AS `buy_state`, `st`.`sell_state` AS `sell_state`, " +
                                                 "`api`.`id` AS `api_id`, `api`.`exchange` AS `exchange`, `api`.`testnet` AS `testnet`, `api`.`public_key` AS `public_key`, `api`.`private_key` AS `private_key`, `api`.`extra` AS `extra` " +

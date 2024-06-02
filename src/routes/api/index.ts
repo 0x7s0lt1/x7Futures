@@ -5,11 +5,10 @@ import * as process from "process";
 // import {rateLimit} from "express-rate-limit";
 import {Sentry} from "../../utils/utils";
 import RequireX7SKey from "../../middlewares/RequireX7SKey";
-import {API_KEY_QUERY, API_SYMBOL_QUERY, API_SYMBOLS_QUERY} from "../../utils/constants";
+import {ALL_API_KEYS_QUERY, API_KEY_QUERY, API_SYMBOL_QUERY, API_SYMBOLS_QUERY} from "../../utils/constants";
 import USDMFutureService from "../../services/binance/USDMFutureService";
 import ApiKeyType from "../../types/ApiKeyType";
 import {Exchange} from "../../types/Exchange";
-import {SymbolStatus} from "../../types/SymbolStatus";
 
 dotenv.config();
 
@@ -52,6 +51,27 @@ router.put('/chat-id', async (req: Request, res: Response) => {
     }
 
 });
+
+router.get('/apis', async (req: Request, res: Response) => {
+
+    const connection = await mysql.createConnection(process.env.DATABASE_URL);
+
+    try {
+
+        const fromId = req.query.from_id;
+        const [result] = await connection.query(ALL_API_KEYS_QUERY, [fromId]);
+
+        await connection.end();
+        
+        res.status(200).send(result);
+
+    } catch (e) {
+        Sentry.captureException(e);
+        console.log(e);
+        res.status(500).send(e);
+    }
+
+})
 
 router.get('/total-capital', async (req: Request, res: Response) => {
 

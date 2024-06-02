@@ -10,6 +10,7 @@ import apiRoutes from "./routes/api";
 import tradingViewRoutes from "./routes/tradingview";
 
 import {Sentry} from "./utils/utils";
+import {TEST_MODE} from "./utils/constants";
 
 // import initCronJobs from "./cronjobs";
 // import USDMFuturesService from "./services/binance/USDMFutureService";
@@ -54,7 +55,7 @@ dotenv.config();
 })();
 
 const server: Express = express();
-const port = process.env.PORT || 3000;
+const port = TEST_MODE ? 3001 : process.env.PORT || 3000;
 
 server.use(cors());
 server.use(Sentry.Handlers.requestHandler());
