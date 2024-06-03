@@ -48,7 +48,7 @@ export default class USDMFutureService {
             }
 
             if(!payload.recWindow){
-                payload.recWindow = "5000";
+                payload.recWindow = "10000";
             }
 
             if(method === "GET") {
