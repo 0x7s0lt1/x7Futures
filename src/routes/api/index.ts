@@ -9,6 +9,7 @@ import {ALL_API_KEYS_QUERY, API_KEY_QUERY, API_SYMBOL_QUERY, API_SYMBOLS_QUERY} 
 import USDMFutureService from "../../services/binance/USDMFutureService";
 import ApiKeyType from "../../types/ApiKeyType";
 import {Exchange} from "../../types/Exchange";
+import SignalBotFormType from "form/SignalBotFormType";
 
 dotenv.config();
 
@@ -178,6 +179,164 @@ router.get('/symbol', async (req: Request, res: Response) => {
         }
 
         return res.status(200).send(symbol_result);
+
+    }catch (e) {
+        Sentry.captureException(e);
+        console.log(e);
+        res.status(500).send(e);
+    }
+
+});
+
+router.post('/symbol', async (req: Request, res: Response) => {
+
+    const connection = await mysql.createConnection(process.env.DATABASE_URL);
+
+    try{
+
+        const fromId = req.query.from_id;
+        const botData = req.body as SignalBotFormType;
+
+        if(!fromId){
+            return res.status(400).send("Missing or wrong from_id!");
+        }
+
+        if(!botData){
+            return res.status(400).send("Missing or wrong bot data!");
+        }
+
+        const [api_result] = await connection.query("SELECT * FROM apis WHERE id = ? AND telegram_user_id = ?", [ botData.api_id, fromId ] );
+
+        if(Array.isArray(api_result) && api_result.length === 0){
+
+            await connection.end();
+            return res.status(403).send(`No API key found for this from_id: ${fromId}`);
+        }
+
+        const [symbol_result] = await connection.query("SELECT * FROM symbol_settings WHERE symbol = ? AND api_id = ?", [  botData.symbol, botData.api_id ] );
+
+        if(Array.isArray(symbol_result) && symbol_result.length !== 0){
+
+            await connection.end();
+            return res.status(403).send(`Symbol already exists for this from_id: ${fromId}`);
+        }
+
+
+        await connection.query("INSERT INTO `symbol_settings` (api_id, symbol, leverage, quote_amount, initial_capital) VALUES (?, ?, ?, ?, ?)",
+            [
+                botData.api_id,
+                botData.symbol,
+                botData.leverage,
+                botData.quote_amount,
+                botData.initial_capital
+            ] );
+
+        await connection.end();
+
+        return res.status(200).send("OK");
+
+
+    }catch (e) {
+        Sentry.captureException(e);
+        console.log(e);
+        res.status(500).send(e);
+    }
+
+})
+
+router.put('/symbol', async (req: Request, res: Response) => {
+
+    const connection = await mysql.createConnection(process.env.DATABASE_URL);
+
+    try{
+
+        const fromId = req.query.from_id;
+        const botData = req.body as SignalBotFormType;
+
+        if(!fromId){
+            return res.status(400).send("Missing or wrong from_id!");
+        }
+
+        if(!botData){
+            return res.status(400).send("Missing or wrong bot data!");
+        }
+
+        const [api_result] = await connection.query("SELECT * FROM apis WHERE id = ? AND telegram_user_id = ?", [ botData.api_id, fromId ] );
+
+        if(Array.isArray(api_result) && api_result.length === 0){
+
+            await connection.end();
+            return res.status(403).send(`No API key found for this from_id: ${fromId}`);
+        }
+
+        const [symbol_result] = await connection.query("SELECT * FROM symbol_settings WHERE id = ? AND symbol = ? AND api_id = ?", [ botData.id,  botData.symbol, botData.api_id ] );
+
+        if(Array.isArray(symbol_result) && symbol_result.length === 0){
+
+            await connection.end();
+            return res.status(403).send(`Symbol not found for this from_id: ${fromId}`);
+        }
+
+        await connection.query("UPDATE `symbol_settings` SET leverage = ?, quote_amount = ?, initial_capital = ? WHERE id = ?",
+            [
+                botData.leverage,
+                botData.quote_amount,
+                botData.initial_capital,
+                botData.id
+            ] );
+
+        await connection.end();
+
+        return res.status(200).send("OK");
+
+
+    }catch (e) {
+        Sentry.captureException(e);
+        console.log(e);
+        res.status(500).send(e);
+    }
+
+})
+
+router.delete('/symbol', async (req: Request, res: Response) => {
+
+    const connection = await mysql.createConnection(process.env.DATABASE_URL);
+
+    try{
+
+        const fromId = req.query.from_id;
+        const id = req.body.id;
+
+        if(!fromId){
+            return res.status(400).send("Missing or wrong from_id!");
+        }
+
+        if(!id){
+            return res.status(400).send("Missing or wrong bot ID!");
+        }
+
+        const [api_result] = await connection.query("SELECT * FROM apis WHERE telegram_user_id = ?", [ fromId ] );
+
+        if(Array.isArray(api_result) && api_result.length === 0){
+
+            await connection.end();
+            return res.status(403).send(`No API key found for this from_id: ${fromId}`);
+        }
+
+        const [symbol_result] = await connection.query("SELECT * FROM symbol_settings WHERE id = ? AND api_id = ?", [ id, api_result[0].id ] );
+
+        if(Array.isArray(symbol_result) && symbol_result.length === 0){
+
+            await connection.end();
+            return res.status(403).send(`Not found for this from_id: ${fromId}`);
+        }
+
+        await connection.query("DELETE FROM `symbol_settings` WHERE id = ?", [ id ] );
+
+        await connection.end();
+
+        return res.status(200).send("OK");
+
 
     }catch (e) {
         Sentry.captureException(e);
