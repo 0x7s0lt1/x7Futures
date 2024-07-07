@@ -10,7 +10,7 @@ import apiRoutes from "./routes/api";
 import tradingViewRoutes from "./routes/tradingview";
 
 import {Sentry} from "./utils/utils";
-import {TEST_MODE} from "./utils/constants";
+import {API_KEY_QUERY, TEST_MODE} from "./utils/constants";
 
 // import initCronJobs from "./cronjobs";
 // import USDMFuturesService from "./services/binance/USDMFutureService";
@@ -34,9 +34,9 @@ dotenv.config();
     //
     //     let connection = await mysql.createConnection(process.env.DATABASE_URL);
     //
-    //     const [result] = await connection.query(API_SYMBOLS_QUERY,[ 1 ] );
+    //     const [result] = await connection.query(API_KEY_QUERY,[ "BINANCE", "1439381529" ] );
     //
-    //     //console.log(result);
+    //     console.log(result);
     //
     //     const futuresService = new USDMFutureService({
     //         id: result[0].id,
@@ -45,6 +45,14 @@ dotenv.config();
     //         testnet: result[0].testnet
     //     } as ApiKeyType );
     //
+    //     // let positions = await futuresService.getPositionInformation("BTCUSDT");
+    //     //
+    //     // console.log(positions);
+    //
+    //     const { hasOpenPosition, positionAmount, positionType } = await futuresService.hasOpenPosition("BTCUSDT", true);
+    //     console.log(
+    //        hasOpenPosition, positionAmount, positionType
+    //     );
     //
     //     //console.log(lev[0].brackets[0].initialLeverage);
     //

@@ -8,6 +8,7 @@ import {Sentry} from "../../utils/utils";
 import ApiKeyType from "../../types/ApiKeyType";
 import {PositionMode} from "../../types/Binance/USDMFutures/PositionMode";
 import {AssetsMode} from "../../types/Binance/USDMFutures/AssetsMode";
+import {PositionSide} from "../../types/Binance/USDMFutures/PositionSide";
 
 dotenv.config();
 
@@ -457,16 +458,20 @@ export default class USDMFutureService {
      * Checks if there is an open position for the given symbol.
      *
      * @param {string} symbol - The symbol to check for an open position.
+     * @param {boolean} detailed -
      * @return {Promise<boolean>} A promise that resolves to true if there is an open position, false otherwise.
      */
-    public async hasOpenPosition( symbol: string ): Promise<boolean> {
+    public async hasOpenPosition( symbol: string, detailed: boolean = false ): Promise<boolean|any> {
 
         return new Promise(async (resolve, reject) => {
             try{
 
-                const positionAmt = await this.getPositionAmount(symbol);
+                const positionAmount = await this.getPositionAmount(symbol);
+                const hasOpenPosition = positionAmount !== 0;
+                const positionType =  hasOpenPosition ?
+                    ( String(positionAmount).startsWith("-") ? PositionSide.SHORT : PositionSide.LONG ) : null;
 
-                resolve(positionAmt > 0);
+                resolve(detailed ? { hasOpenPosition, positionAmount, positionType  } : hasOpenPosition);
 
             }catch (err){
                 Sentry.captureException(err);

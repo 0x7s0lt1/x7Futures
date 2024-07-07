@@ -1,5 +1,4 @@
 import dotenv from "dotenv";
-import * as crypto from "crypto";
 import * as process from "process";
 import mysql from "mysql2/promise";
 import {OrderSide} from "../../types/Binance/USDMFutures/OrderSide";
@@ -11,6 +10,7 @@ import symbolRuleMatches from "../../utils/symbolRules";
 import SignalBotType from "../../types/SignalBotType";
 import ApiKeyType from "../../types/ApiKeyType";
 import USDMFutureService from "./USDMFutureService";
+import {PositionSide} from "../../types/Binance/USDMFutures/PositionSide";
 
 dotenv.config();
 
@@ -45,6 +45,7 @@ export default class USDMFutureBotService extends USDMFutureService {
 
                 }else if(this.bot.signal.type === SignalPayloadType.STATE){
 
+                    //TODO: remove?
                     await this.handleStateSignal();
 
                 }
@@ -78,25 +79,49 @@ export default class USDMFutureBotService extends USDMFutureService {
                     return resolve();
                 }
 
-                const hasOpenPositions = await this.hasOpenPosition(this.bot.signal.symbol);
+                const { hasOpenPosition, positionAmount, positionType } = await this.hasOpenPosition(this.bot.signal.symbol, true);
 
                 if( this.bot.signal.side == OrderSide.BUY ){
 
-                    const balance = await this.getBalance();
-                    const amount = await this.calculateBaseAmount(this.bot.signal.symbol, Number(balance.balance) );
+                    if(hasOpenPosition && positionType === PositionSide.SHORT){
 
-                    if(amount !== null){
-                        await this.marketBuy(this.bot.signal.symbol, amount);
+                        await this.marketBuy(this.bot.signal.symbol, Math.abs(positionAmount) );
+
                     }else{
-                        console.log("Insufficient balance",{amount, balance});
-                        Sentry.captureMessage("Insufficient balance" + JSON.stringify({amount, balance}));
+
+                        const balance = await this.getBalance();
+                        const amount = await this.calculateBaseAmount(this.bot.signal.symbol, Number(balance.balance) );
+
+                        if(amount !== null){
+                            await this.marketBuy(this.bot.signal.symbol, amount);
+                        }else{
+                            console.log("Insufficient balance",{amount, balance});
+                            Sentry.captureMessage("Insufficient balance" + JSON.stringify({amount, balance}));
+                        }
+
                     }
 
-                }else if( this.bot.signal.side == OrderSide.SELL && hasOpenPositions){
+                }else if( this.bot.signal.side == OrderSide.SELL ){
 
-                    const positionAmount = await this.getPositionAmount(this.bot.signal.symbol);
+                    if(hasOpenPosition && positionType === PositionSide.LONG){
 
-                    await this.marketSell(this.bot.signal.symbol, positionAmount);
+                        await this.marketSell(this.bot.signal.symbol, positionAmount);
+
+                    }else{
+
+                        const balance = await this.getBalance();
+                        const amount = await this.calculateBaseAmount(this.bot.signal.symbol, Number(balance.balance) );
+
+                        if(amount !== null){
+                            await this.marketSell(this.bot.signal.symbol, amount);
+                        }else{
+                            console.log("Insufficient balance",{amount, balance});
+                            Sentry.captureMessage("Insufficient balance" + JSON.stringify({amount, balance}));
+                        }
+
+                    }
+
+
                 }
 
                 resolve();
@@ -197,13 +222,8 @@ export default class USDMFutureBotService extends USDMFutureService {
 
         return new Promise(async (resolve, reject) => {
 
-            const calculatedAmount = await this.calculateBaseAmount(symbol, amount);
-
-            if(calculatedAmount === null){
-                resolve(null);
-            }
-
             try{
+
                 let order = await this.newOrder({
                     symbol: symbol,
                     side: OrderSide.BUY,
