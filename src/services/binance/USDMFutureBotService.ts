@@ -11,6 +11,7 @@ import SignalBotType from "../../types/SignalBotType";
 import ApiKeyType from "../../types/ApiKeyType";
 import USDMFutureService from "./USDMFutureService";
 import {PositionSide} from "../../types/Binance/USDMFutures/PositionSide";
+import {NoteType} from "../../types/TradingView/NoteType";
 
 dotenv.config();
 
@@ -87,6 +88,20 @@ export default class USDMFutureBotService extends USDMFutureService {
 
                         await this.marketBuy(this.bot.signal.symbol, Math.abs(positionAmount) );
 
+                        if(this.bot.signal.note == NoteType.REVERSE){
+
+                            const balance = await this.getBalance();
+                            const amount = await this.calculateBaseAmount(this.bot.signal.symbol, Number(balance.balance) );
+
+                            if(amount !== null){
+                                await this.marketBuy(this.bot.signal.symbol, amount);
+                            }else{
+                                console.log("Insufficient balance",{amount, balance});
+                                Sentry.captureMessage("Insufficient balance" + JSON.stringify({amount, balance}));
+                            }
+
+                        }
+
                     }else{
 
                         const balance = await this.getBalance();
@@ -106,6 +121,20 @@ export default class USDMFutureBotService extends USDMFutureService {
                     if(hasOpenPosition && positionType === PositionSide.LONG){
 
                         await this.marketSell(this.bot.signal.symbol, positionAmount);
+
+                        if(this.bot.signal.note == NoteType.REVERSE){
+
+                            const balance = await this.getBalance();
+                            const amount = await this.calculateBaseAmount(this.bot.signal.symbol, Number(balance.balance) );
+
+                            if(amount !== null){
+                                await this.marketSell(this.bot.signal.symbol, amount);
+                            }else{
+                                console.log("Insufficient balance",{amount, balance});
+                                Sentry.captureMessage("Insufficient balance" + JSON.stringify({amount, balance}));
+                            }
+
+                        }
 
                     }else{
 

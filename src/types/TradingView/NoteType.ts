@@ -1,6 +1,7 @@
 export enum NoteType{
     TEST = "TEST",
     DEBUG = "DEBUG",
+    REVERSE = "REVERSE"
 }
 
 /**
