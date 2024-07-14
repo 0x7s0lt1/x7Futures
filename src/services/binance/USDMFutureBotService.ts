@@ -258,7 +258,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     side: OrderSide.BUY,
                     type: OrderType.MARKET,
                     quantity: amount,
-                    recWindow: "5000",
+                    recWindow: "10000",
                     timestamp: Date.now().toString(),
                 });
 
@@ -302,7 +302,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     side: OrderSide.SELL,
                     type: OrderType.MARKET,
                     quantity: amount,
-                    recWindow: "5000",
+                    recWindow: "10000",
                     timestamp: Date.now().toString(),
                 });
 
@@ -347,7 +347,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     price: price,
                     timeInForce: OrderDuration.GTD,
                     goodTillDate: ( Date.now() + 606000 ).toString(),
-                    recWindow: "5000",
+                    recWindow: "10000",
                     timestamp: Date.now().toString(),
                 });
 
@@ -384,7 +384,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     price: price,
                     timeInForce: OrderDuration.GTD,
                     goodTillDate: ( Date.now() + 606000 ).toString(),
-                    recWindow: "5000",
+                    recWindow: "10000",
                     timestamp: Date.now().toString(),
                 });
 
