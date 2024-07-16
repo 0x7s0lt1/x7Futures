@@ -12,6 +12,7 @@ import ApiKeyType from "../../types/ApiKeyType";
 import USDMFutureService from "./USDMFutureService";
 import {PositionSide} from "../../types/Binance/USDMFutures/PositionSide";
 import {NoteType} from "../../types/TradingView/NoteType";
+import {DEF_REQ_WINDOW} from "../../utils/constants";
 
 dotenv.config();
 
@@ -258,7 +259,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     side: OrderSide.BUY,
                     type: OrderType.MARKET,
                     quantity: amount,
-                    recWindow: "10000",
+                    recWindow: DEF_REQ_WINDOW,
                     timestamp: Date.now().toString(),
                 });
 
@@ -302,7 +303,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     side: OrderSide.SELL,
                     type: OrderType.MARKET,
                     quantity: amount,
-                    recWindow: "10000",
+                    recWindow: DEF_REQ_WINDOW,
                     timestamp: Date.now().toString(),
                 });
 
@@ -347,7 +348,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     price: price,
                     timeInForce: OrderDuration.GTD,
                     goodTillDate: ( Date.now() + 606000 ).toString(),
-                    recWindow: "10000",
+                    recWindow: DEF_REQ_WINDOW,
                     timestamp: Date.now().toString(),
                 });
 
@@ -384,7 +385,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     price: price,
                     timeInForce: OrderDuration.GTD,
                     goodTillDate: ( Date.now() + 606000 ).toString(),
-                    recWindow: "10000",
+                    recWindow: DEF_REQ_WINDOW,
                     timestamp: Date.now().toString(),
                 });
 

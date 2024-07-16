@@ -4,11 +4,12 @@ import Order from "../../types/Binance/USDMFutures/Order";
 import {OrderSide} from "../../types/Binance/USDMFutures/OrderSide";
 import {SymbolFilter} from "../../types/Binance/USDMFutures/SymbolFilter";
 import {KlineInterval} from "Binance/KlineInterval";
-import {Sentry} from "../../utils/utils";
+import {Sentry, sleep} from "../../utils/utils";
 import ApiKeyType from "../../types/ApiKeyType";
 import {PositionMode} from "../../types/Binance/USDMFutures/PositionMode";
 import {AssetsMode} from "../../types/Binance/USDMFutures/AssetsMode";
 import {PositionSide} from "../../types/Binance/USDMFutures/PositionSide";
+import {DEF_REQ_WINDOW} from "../../utils/constants";
 
 dotenv.config();
 
@@ -49,7 +50,7 @@ export default class USDMFutureService {
             }
 
             if(!payload.recWindow){
-                payload.recWindow = "10000";
+                payload.recWindow = DEF_REQ_WINDOW;
             }
 
             if(method === "GET") {
@@ -738,6 +739,7 @@ export default class USDMFutureService {
                 let position = await this.getPositionInformation(symbol);
 
                 while (position.length === 0 && _try < 5) {
+                    await sleep(1500);
                     _try++;
                     position = await this.getPositionInformation(symbol);
                 }
