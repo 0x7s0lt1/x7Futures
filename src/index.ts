@@ -29,7 +29,7 @@ dotenv.config();
     await new SignalBroadcastConsumer().consume();
 
     //await initCronJobs();
-    //
+
     // try{
     //
     //     let connection = await mysql.createConnection(process.env.DATABASE_URL);
@@ -49,10 +49,7 @@ dotenv.config();
     //     //
     //     // console.log(positions);
     //
-    //     const { hasOpenPosition, positionAmount, positionType } = await futuresService.hasOpenPosition("BTCUSDT", true);
-    //     console.log(
-    //        hasOpenPosition, positionAmount, positionType
-    //     );
+    //     console.log(await futuresService.cancelAllOpenOrders("BTCUSDT"));
     //
     //     //console.log(lev[0].brackets[0].initialLeverage);
     //
@@ -63,7 +60,7 @@ dotenv.config();
 })();
 
 const server: Express = express();
-const port = TEST_MODE ? 3001 : process.env.PORT || 3000;
+const port = TEST_MODE ? 3002 : process.env.PORT || 3000;
 
 server.use(cors());
 server.use(Sentry.Handlers.requestHandler());

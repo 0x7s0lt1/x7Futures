@@ -53,13 +53,14 @@ export default class USDMFutureService {
                 payload.recWindow = DEF_REQ_WINDOW;
             }
 
-            if(method === "GET") {
+            if(method === "GET" || method === "DELETE") {
 
                 const query_string = this.generateQueryString(payload);
                 const signature = this.generateSignature(query_string);
                 const url = this.baseUrl + path + "?" + query_string + (requireSignature ? "&signature=" + signature : "");
 
                 fetch(url, {
+                    method: method,
                     headers: this.authHeaders
                 })
                     .then(res => res.json())
@@ -533,6 +534,20 @@ export default class USDMFutureService {
 
         return new Promise((resolve, reject) => {
             this.query("DELETE", "/fapi/v1/order", {orderId: orderId}, true)
+            .then(res => resolve(res))
+            .catch(err => reject(err));
+        });
+    }
+
+    /**
+     * Cancels all open orders for a given symbol.
+     *
+     * @param {string} symbol - The symbol for which to cancel all open orders.
+     * @return {Promise<any>} A Promise that resolves with the result of the cancellation request.
+     */
+    public async cancelAllOpenOrders(symbol: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.query("DELETE", "/fapi/v1/allOpenOrders", {symbol: symbol}, true)
             .then(res => resolve(res))
             .catch(err => reject(err));
         });

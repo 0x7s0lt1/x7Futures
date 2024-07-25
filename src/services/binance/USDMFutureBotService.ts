@@ -4,9 +4,7 @@ import mysql from "mysql2/promise";
 import {OrderSide} from "../../types/Binance/USDMFutures/OrderSide";
 import {OrderType} from "../../types/Binance/USDMFutures/OrderType";
 import {OrderDuration} from "../../types/Binance/USDMFutures/OrderDuration";
-import {SignalPayloadType} from "../../types/SignalPayloadType";
 import {Sentry} from "../../utils/utils";
-import symbolRuleMatches from "../../utils/symbolRules";
 import SignalBotType from "../../types/SignalBotType";
 import ApiKeyType from "../../types/ApiKeyType";
 import USDMFutureService from "./USDMFutureService";
@@ -37,20 +35,12 @@ export default class USDMFutureBotService extends USDMFutureService {
     {
         return new Promise<void>(async (resolve, reject) => {
 
+            //TODO: remove ?
             try{
 
                 this.connection = await mysql.createConnection(process.env.DATABASE_URL);
 
-                if(this.bot.signal.type === SignalPayloadType.TRADE){
-
-                    await this.handleTradeSignal();
-
-                }else if(this.bot.signal.type === SignalPayloadType.STATE){
-
-                    //TODO: remove?
-                    await this.handleStateSignal();
-
-                }
+                await this.handleTradeSignal();
 
                 resolve();
 
@@ -72,14 +62,11 @@ export default class USDMFutureBotService extends USDMFutureService {
 
     }
 
+    //TODO: cancel open security orders
     private async handleTradeSignal(): Promise<any>{
 
         return new Promise<void>(async (resolve, reject) => {
             try{
-
-                if( !await symbolRuleMatches(this.bot) ){
-                    return resolve();
-                }
 
                 const { hasOpenPosition, positionAmount, positionType } = await this.hasOpenPosition(this.bot.signal.symbol, true);
 
@@ -88,6 +75,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     if(hasOpenPosition && positionType === PositionSide.SHORT){
 
                         await this.marketBuy(this.bot.signal.symbol, Math.abs(positionAmount) );
+                        await this.cancelAllOpenOrders(this.bot.signal.symbol);
 
                         if(this.bot.signal.note == NoteType.REVERSE){
 
@@ -96,6 +84,7 @@ export default class USDMFutureBotService extends USDMFutureService {
 
                             if(amount !== null){
                                 await this.marketBuy(this.bot.signal.symbol, amount);
+                                await this.setSecurityOptions();
                             }else{
                                 console.log("Insufficient balance",{amount, balance});
                                 Sentry.captureMessage("Insufficient balance" + JSON.stringify({amount, balance}));
@@ -110,6 +99,7 @@ export default class USDMFutureBotService extends USDMFutureService {
 
                         if(amount !== null){
                             await this.marketBuy(this.bot.signal.symbol, amount);
+                            await this.setSecurityOptions();
                         }else{
                             console.log("Insufficient balance",{amount, balance});
                             Sentry.captureMessage("Insufficient balance" + JSON.stringify({amount, balance}));
@@ -122,6 +112,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     if(hasOpenPosition && positionType === PositionSide.LONG){
 
                         await this.marketSell(this.bot.signal.symbol, positionAmount);
+                        await this.cancelAllOpenOrders(this.bot.signal.symbol);
 
                         if(this.bot.signal.note == NoteType.REVERSE){
 
@@ -130,6 +121,7 @@ export default class USDMFutureBotService extends USDMFutureService {
 
                             if(amount !== null){
                                 await this.marketSell(this.bot.signal.symbol, amount);
+                                await this.setSecurityOptions();
                             }else{
                                 console.log("Insufficient balance",{amount, balance});
                                 Sentry.captureMessage("Insufficient balance" + JSON.stringify({amount, balance}));
@@ -144,6 +136,7 @@ export default class USDMFutureBotService extends USDMFutureService {
 
                         if(amount !== null){
                             await this.marketSell(this.bot.signal.symbol, amount);
+                            await this.setSecurityOptions();
                         }else{
                             console.log("Insufficient balance",{amount, balance});
                             Sentry.captureMessage("Insufficient balance" + JSON.stringify({amount, balance}));
@@ -163,36 +156,6 @@ export default class USDMFutureBotService extends USDMFutureService {
             }
 
         });
-    }
-
-    /**
-     * Handles the state signal and updates the database accordingly.
-     *
-     * @return {Promise<any>} a Promise that resolves when the state signal is handled
-     */
-    private async handleStateSignal(): Promise<any>{
-        return new Promise<void>(async (resolve, reject) => {
-
-            try{
-
-                const field = this.bot.signal.side === OrderSide.BUY ? "buy_state" : "sell_state";
-                const [result] = await this.connection.query(`SELECT * FROM symbol_states WHERE symbol = ?`,[this.bot.signal.symbol]);
-
-                if(!result.length){
-                    await this.connection.query(`INSERT INTO symbol_states ( symbol, ${field} ) VALUES ( ?, ? )`,[this.bot.signal.symbol, this.bot.signal.state]);
-                }else{
-                    await this.connection.query(`UPDATE symbol_states SET ${field} = ? WHERE symbol = ?`,[this.bot.signal.state, this.bot.signal.symbol]);
-                }
-
-                resolve();
-
-            }catch (e) {
-                Sentry.captureException(e);
-                console.log(e);
-                reject(e);
-            }
-
-        })
     }
 
     /**
@@ -240,6 +203,48 @@ export default class USDMFutureBotService extends USDMFutureService {
 
     }
 
+    /**
+     * Handles the security options for the bot (stop loss and take profit).
+     *
+     * @return {Promise<any>} A promise that resolves when the security options are handled.
+     */
+    public async setSecurityOptions(): Promise<any>{
+
+        return new Promise<void>(async (resolve, reject) => {
+
+            try{
+
+                if(this.bot.signal.stop !== undefined){
+                    await this.setStopLoss(this.bot.signal.symbol,this.bot.signal.side,this.bot.signal.stop);
+                }
+
+            }catch (err){
+                Sentry.captureException(err);
+                console.log(err);
+                reject(err);
+            }finally {
+
+                try{
+
+                    if (this.bot.signal.take !== undefined) {
+                        await this.setTakeProfit(this.bot.signal.symbol, this.bot.signal.side, this.bot.signal.take);
+                    }
+
+                    resolve();
+
+                }catch (err){
+                    Sentry.captureException(err);
+                    console.log(err);
+                    reject(err);
+                }
+
+
+            }
+
+
+        });
+    }
+
 
     /**
      * Executes a market buy order for a given symbol and amount.
@@ -248,7 +253,7 @@ export default class USDMFutureBotService extends USDMFutureService {
      * @param {number} amount - The amount of the asset to buy.
      * @return {Promise<any>} - A promise that resolves with the order details if successful, or rejects with an error if unsuccessful.
      */
-    public async marketBuy( symbol: string, amount: number): Promise<any> {
+    public async marketBuy( symbol: string, amount: number ): Promise<any> {
 
         return new Promise(async (resolve, reject) => {
 
@@ -272,6 +277,7 @@ export default class USDMFutureBotService extends USDMFutureService {
                     }
 
                 }
+
 
                 resolve(order);
 
@@ -400,6 +406,86 @@ export default class USDMFutureBotService extends USDMFutureService {
                 console.log(err);
                 reject(err);
             }
+        });
+    }
+
+    /**
+     * Sets a stop loss order for a given symbol, side, and price.
+     *
+     * @param {string} symbol - The symbol for the asset to set the stop loss for.
+     * @param {OrderSide} side - The side of the order (BUY or SELL).
+     * @param {number} price - The price at which to set the stop loss.
+     * @return {Promise<any>} A promise that resolves when the stop loss order is set successfully, or rejects with an error if unsuccessful.
+     */
+    public async setStopLoss( symbol: string, side: OrderSide, price: number): Promise<any> {
+
+        return new Promise<void>( async (resolve, reject) => {
+
+            try {
+
+                const order = await this.newOrder({
+                    symbol: symbol,
+                    side: side === OrderSide.BUY ? OrderSide.SELL : OrderSide.BUY,
+                    type: OrderType.STOP_MARKET,
+                    stopPrice: price,
+                    closePosition: "true",
+                    recWindow: DEF_REQ_WINDOW,
+                    timestamp: Date.now().toString(),
+                });
+
+                if(order.code !== undefined){
+                    throw new Error(order.msg);
+                }
+
+                resolve();
+
+            }catch (err){
+                Sentry.captureException(err);
+                console.log("STOP LOSS ERROR: ");
+                console.log(err);
+                reject(err);
+            }
+
+        });
+    }
+
+    /**
+     * Sets a stop loss order for a given symbol, side, and price.
+     *
+     * @param {string} symbol - The symbol for the asset to set the stop loss for.
+     * @param {OrderSide} side - The side of the order (BUY or SELL).
+     * @param {number} price - The price at which to set the stop loss.
+     * @return {Promise<any>} A promise that resolves when the stop loss order is set successfully, or rejects with an error if unsuccessful.
+     */
+    public async setTakeProfit( symbol: string, side: OrderSide, price: number): Promise<any> {
+
+        return new Promise<void>( async (resolve, reject) => {
+
+            try {
+
+                const order = await this.newOrder({
+                    symbol: symbol,
+                    side: side === OrderSide.BUY ? OrderSide.SELL : OrderSide.BUY,
+                    type: OrderType.TAKE_PROFIT_MARKET,
+                    stopPrice: price,
+                    closePosition: "true",
+                    recWindow: DEF_REQ_WINDOW,
+                    timestamp: Date.now().toString(),
+                });
+
+                if(order.code !== undefined){
+                    throw new Error(order.msg);
+                }
+
+                resolve();
+
+            }catch (err){
+                Sentry.captureException(err);
+                console.log("TAKE PROFIT ERROR: ");
+                console.log(err);
+                reject(err);
+            }
+
         });
     }
 
