@@ -1,4 +1,4 @@
-export const TEST_MODE = true;
+export const TEST_MODE = false;
 
 export const DEF_REQ_WINDOW = "10000";
 
